@@ -31,15 +31,16 @@ def load_inventory():
     items = []
 
     # read manufacturer data
-    with open('ManufacturerList.txt') as f:
-        for line in f:
-            parts = line.strip().split(',') 
-            item_id = parts[0].strip() 
-            manufacturer = parts[1].strip()
-            item_type = parts[2].strip()
-            damaged = parts[3].strip() if len(parts) > 3 else 'no'
+    try:
+        with open('ManufacturerList.txt') as f:
+            for line in f:
+                parts = line.strip().split(',') 
+                item_id = parts[0].strip() 
+                manufacturer = parts[1].strip()
+                item_type = parts[2].strip()
+                damaged = parts[3].strip() if len(parts) > 3 else 'no'
 
-            item = {
+                item = {
                 'id': item_id,
                 'manufacturer': manufacturer,
                 'type': item_type,
@@ -48,19 +49,47 @@ def load_inventory():
             # add to list
             items.append(item)
 
-    with open('PriceList.txt') as f:
-        for line in f:
-            parts = line.strip().split(',')
-            item_id = parts[0].strip()
-            price = parts[1].strip()
+    # read price data
+        with open('PriceList.txt') as f:
+            for line in f:
+                parts = line.strip().split(',')
+                item_id = parts[0].strip()
+                price = parts[1].strip()
 
-            for item in items:
-                if item['id'] == item_id:
-                    item['price'] = price
-                    break
+                for item in items:
+                    if item['id'] == item_id:
+                        item['price'] = price
+                        break
 
+    # read service data data
+        with open('ServiceDatesList.txt') as f:
+            for line in f:
+                parts = line.strip().split(',')
+                item_id = parts[0].strip()
+                service_date = parts[1].strip()
+                damaged_status = parts[2].strip() if len(parts) > 2 else 'no'
+
+                for item in items:
+                    if item['id'] == item_id:
+                        item['service_date'] = service_date
+
+                        # update damaged status if shown in service date file
+                        if damaged_status != 'no':
+                            item['damaged'] = damaged_status
+                        break
+    except FileNotFoundError as e:
+        print(f"Error loading inventory files: {e}")
+        return []
+    
+      
+
+    # convert all items to InventoryItem objects
     inventory = []
     for item in items:
+        # skip items missing certain data
+        if 'service_date' not in item:
+            continue
+
         inventory_item = InventoryItem(
             item['id'],
             item['manufacturer'],
@@ -77,6 +106,7 @@ def process_query(query, inventory):
     """ handle a user query and print results """
     query = query.lower()                           # clear query
     
+    # get all unique manufacurters and item types
     manufacturers = set()
     item_types = set()
     for item in inventory:
@@ -88,20 +118,21 @@ def process_query(query, inventory):
     found_type = None
 
     for word in query.split():
-        if word in manufacturers:
+        word_lower = word.lower()
+        if word_lower in manufacturers:
             if found_manufacturer is not None:
                 print("No such item in inventory")              # more than one manufacturer
                 return
-            found_manufacturer = word
+            found_manufacturer = word_lower
 
-        if word in item_types:
+        if word_lower in item_types:
             if found_type is not None:
                 print("No such item in inventory")             # more than one type
                 return
-            found_type = word
+            found_type = word_lower
 
     if not found_manufacturer or not found_type:
-        print("No such itme in inventory")
+        print("No such item in inventory")
         return
     
     # find matching available items
@@ -153,5 +184,5 @@ def main():
 if __name__ == "__main__":
     main()
 
-# need to solve and debug some small minor issues
-    
+
+# fix some smaller issues but otherwise good
