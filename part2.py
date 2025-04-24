@@ -120,7 +120,7 @@ def process_query(query, inventory):
     best_item = max(matches, key =lambda x: x.price)
     print(f"Your item is: {best_item.display()}")
 
-    # look for alternatives
+    # look for alternatives 
     alternatives = []
     for item in inventory:
         if (item.type == found_type and
@@ -152,4 +152,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# need to solve and debug some small minor issues
     
